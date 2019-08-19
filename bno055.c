@@ -392,6 +392,7 @@ static uint32_t register_write(bno055_reg_addr_t reg_address, uint8_t value)
 static bno055_driver_status_t remote_state_status = BNO055_DRIVER_STATUS_ASLEEP;
 
 static bno055_page_t remote_state_page = BNO055_PAGE_INVALID;
+static bool b_chip_id_verified = false;
 
 APP_TIMER_DEF(remote_state_transition_timer);
 static nrf_evt_queue_evt_t remote_state_transition_evt;
@@ -421,6 +422,7 @@ static bool remote_state_is_ready(void)
     return  BNO055_DRIVER_STATUS_AWAKE == remote_state_status
             && !(register_operation_ongoing && alters_state(&register_last_op))
             && !b_remote_state_awaiting_transition
+            && b_chip_id_verified
             && BNO055_PAGE_0 == remote_state_page
             && b_current_operating_mode_valid
             && b_current_power_mode_valid
@@ -468,7 +470,11 @@ static void remote_state_update(void)
             (void) register_write(BNO055_REG_ADDR_PAGE_ID, BNO055_PAGE_0);
         } break;
         case BNO055_PAGE_0:
-            if (!b_current_operating_mode_valid)
+            if (!b_chip_id_verified)
+            {
+                (void) register_read(BNO055_REG_ADDR_CHIP_ID, 1);
+            }
+            else if (!b_current_operating_mode_valid)
             {
                 (void) register_read(BNO055_REG_ADDR_OPR_MODE, 1);
             }
@@ -538,6 +544,10 @@ static void remote_state_on_register_read_success(uint8_t address, uint8_t value
                 b_current_power_mode_valid = true;
                 current_power_mode = value;
             }
+        break;
+        case BNO055_REG_ADDR_CHIP_ID:
+            if (value != BNO055_CHIP_ID) b_is_inconsistent = true;
+            else b_chip_id_verified = true;
         break;
         default:
             /* Register is not relevant to remote state tracking */
@@ -630,6 +640,7 @@ uint32_t bno055_wakeup(void)
     {
         case BNO055_DRIVER_STATUS_ASLEEP:
             remote_state_page = BNO055_PAGE_INVALID;
+            b_chip_id_verified = false;
             b_current_operating_mode_valid = false;
             b_current_power_mode_valid = false;
 
@@ -813,6 +824,7 @@ static void on_failure(bno055_failure_reason_t reason)
     simple_operation_state = SIMPLE_OPERATION_STATE_INACTIVE;
 
     remote_state_page = BNO055_PAGE_INVALID;
+    b_chip_id_verified = false;
     b_current_operating_mode_valid = false;
     b_current_power_mode_valid = false;
 

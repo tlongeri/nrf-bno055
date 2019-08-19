@@ -209,6 +209,13 @@ typedef struct {
 #define BNO055_ADDRESS_1 0x28
 #define BNO055_ADDRESS_2 0x29
 
+/**
+ * @brief ID for all BNO055s.
+ * 
+ * The value of the CHIP_ID register in all BNO055 ICs.
+ */
+#define BNO055_CHIP_ID 0xA0
+
 /** @brief Get the bno055 module status */
 bno055_driver_status_t bno055_get_driver_status(void);
 
