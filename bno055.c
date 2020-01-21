@@ -8,10 +8,9 @@
 #include "nrf_error.h"
 
 #include "app_timer.h"
+#include "app_util_platform.h"
 #include "nrf_drv_twi.h"
 #include "nrf_evt_queue.h"
-
-#include "fes_imu_core.h"
 
 /* The maximum time the BNO055 is allowed to stretch the clock */
 #define BNO055_TWI_TIMEOUT_TIME_MS 500
