@@ -288,11 +288,11 @@ static void register_twi_handler(const nrf_drv_twi_evt_t * p_evt, void * p_conte
 }
 
 /**
- * @brief   Write to BNO055 register.
+ * @brief   Read BNO055 register
  * 
- * @details After the write is complete, the callback is called in main context using nrf_evt_queue.
+ * @details After the read is complete, the callback is called in main context using nrf_evt_queue.
  * 
- * @retval  NRF_SUCCESS    Successfully started write
+ * @retval  NRF_SUCCESS    Successfully started read
  * @retval  NRF_ERROR_BUSY There is a read/write operation already ongoing
  */
 static uint32_t register_read(bno055_reg_addr_t reg_address, uint8_t length)
@@ -336,11 +336,11 @@ static uint32_t register_read(bno055_reg_addr_t reg_address, uint8_t length)
 }
 
 /**
- * @brief   Read BNO055 register
+ * @brief   Read from BNO055 register.
  * 
- * @details After the read is complete, the callback is called in main context using nrf_evt_queue.
+ * @details After the write is complete, the callback is called in main context using nrf_evt_queue.
  * 
- * @retval  NRF_SUCCESS    Successfully started read
+ * @retval  NRF_SUCCESS    Successfully started write
  * @retval  NRF_ERROR_BUSY There is a read/write operation already ongoing
  */
 static uint32_t register_write(bno055_reg_addr_t reg_address, uint8_t value)
