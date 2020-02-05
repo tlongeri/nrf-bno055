@@ -58,6 +58,12 @@ static void remote_state_update(void);
 /* Helper functions */
 /********************/
 
+/** @brief Convert uint8_t to int8_t in a portable way. */
+static inline int8_t uint8_to_int8(uint8_t val)
+{
+    return val < 128 ? val : val - 256;
+}
+
 /**
  * @brief Returns whether a given mode is a fusion mode.
  * 
@@ -681,13 +687,10 @@ static void simple_quat_read_complete(const register_operation_t * p_op)
 
     bno055_evt_t evt;
     evt.type = BNO055_EVT_TYPE_QUAT_READ_DONE;
-    /* The expression *(int8_t) &val is a way to convert uint8_t to int8_t that does not
-     * invoke undefined behavior, because uint8_t and int8_t, unlike other types such
-     * char and int, are guaranteed to use 2's complement representation. */
-    evt.data.quat_read_done.w = 256 * *(int8_t *) &register_rx_buffer[1] + register_rx_buffer[0];
-    evt.data.quat_read_done.x = 256 * *(int8_t *) &register_rx_buffer[3] + register_rx_buffer[2];
-    evt.data.quat_read_done.y = 256 * *(int8_t *) &register_rx_buffer[5] + register_rx_buffer[4];
-    evt.data.quat_read_done.z = 256 * *(int8_t *) &register_rx_buffer[7] + register_rx_buffer[6];
+    evt.data.quat_read_done.w = 256 * uint8_to_int8(register_rx_buffer[1]) + register_rx_buffer[0];
+    evt.data.quat_read_done.x = 256 * uint8_to_int8(register_rx_buffer[3]) + register_rx_buffer[2];
+    evt.data.quat_read_done.y = 256 * uint8_to_int8(register_rx_buffer[5]) + register_rx_buffer[4];
+    evt.data.quat_read_done.z = 256 * uint8_to_int8(register_rx_buffer[7]) + register_rx_buffer[6];
     bno055_evt_callback(&evt);
 }
 
