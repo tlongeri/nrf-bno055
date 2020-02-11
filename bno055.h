@@ -130,6 +130,12 @@ typedef enum {
     BNO055_OPERATING_MODE_NDOF         = 0x0C
 } bno055_operating_mode_t;
 
+typedef struct {
+    int16_t x;
+    int16_t y;
+    int16_t z;
+} bno055_vector_t;
+
 /**
  * @brief Quaternion data as reported by the BNO055.
  * 
@@ -173,14 +179,23 @@ typedef enum {
 typedef enum {
     BNO055_EVT_TYPE_FAILURE,
     BNO055_EVT_TYPE_READY,
+    BNO055_EVT_TYPE_FULL_READ_DONE,
     BNO055_EVT_TYPE_QUAT_READ_DONE,
     BNO055_EVT_TYPE_REGISTER_READ_DONE
 } bno055_evt_type_t;
 
 typedef struct {
+    bno055_vector_t acc;
+    bno055_vector_t mag;
+    bno055_vector_t gyr;
+    bno055_quat_t   qua;
+} bno055_full_read_t;
+
+typedef struct {
     bno055_evt_type_t type;
     union {
         bno055_ready_evt_type_t ready;
+        bno055_full_read_t      full_read_done;
         bno055_quat_t           quat_read_done;
         struct {
             uint8_t *    p_data;

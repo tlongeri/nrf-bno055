@@ -19,6 +19,8 @@
  * Taken from table 4-8 of the datasheet */
 #define BNO055_LONG_WRITE_IDLE_TIME_US 500
 
+#define FULL_READ_SIZE (BNO055_REG_ADDR_QUA_DATA_Z_MSB - BNO055_REG_ADDR_ACC_DATA_X_LSB + 1)
+
 typedef enum {
     BNO055_PAGE_0 = 0x00,
     BNO055_PAGE_1 = 0x01,
@@ -159,7 +161,7 @@ static nrf_evt_queue_evt_t register_timeout_evt;
  * TODO: I am not sure whether the nrf_drv_twi requires them to be statically allocated or not, so
  *       I'm leaving it statically allocated for now. */
 #define REGISTER_TX_BUFFER_SIZE 2 
-#define REGISTER_RX_BUFFER_SIZE 8
+#define REGISTER_RX_BUFFER_SIZE 32
 static uint8_t register_tx_buffer[REGISTER_TX_BUFFER_SIZE];
 static uint8_t register_rx_buffer[REGISTER_RX_BUFFER_SIZE];
 
@@ -678,6 +680,30 @@ typedef enum {
 static simple_operation_state_t simple_operation_state = SIMPLE_OPERATION_STATE_INACTIVE;
 static void (*simple_operation_complete_callback)(const register_operation_t *);
 
+static void simple_full_read_complete(const register_operation_t * p_op)
+{
+    ASSERT(REGISTER_OPERATION_TYPE_READ == p_op->type);
+    ASSERT(FULL_READ_SIZE == p_op->data.read.rx_len);
+    ASSERT(NULL != p_op->data.read.p_rx_buf);
+
+    bno055_evt_t evt;
+    evt.type = BNO055_EVT_TYPE_FULL_READ_DONE;
+    evt.data.full_read_done.acc.x = 256 * uint8_to_int8(register_rx_buffer[1]) + register_rx_buffer[0];
+    evt.data.full_read_done.acc.y = 256 * uint8_to_int8(register_rx_buffer[3]) + register_rx_buffer[2];
+    evt.data.full_read_done.acc.z = 256 * uint8_to_int8(register_rx_buffer[5]) + register_rx_buffer[4];
+    evt.data.full_read_done.mag.x = 256 * uint8_to_int8(register_rx_buffer[7]) + register_rx_buffer[6];
+    evt.data.full_read_done.mag.y = 256 * uint8_to_int8(register_rx_buffer[9]) + register_rx_buffer[8];
+    evt.data.full_read_done.mag.z = 256 * uint8_to_int8(register_rx_buffer[11]) + register_rx_buffer[10];
+    evt.data.full_read_done.gyr.x = 256 * uint8_to_int8(register_rx_buffer[13]) + register_rx_buffer[12];
+    evt.data.full_read_done.gyr.y = 256 * uint8_to_int8(register_rx_buffer[15]) + register_rx_buffer[14];
+    evt.data.full_read_done.gyr.z = 256 * uint8_to_int8(register_rx_buffer[17]) + register_rx_buffer[16];
+    evt.data.full_read_done.qua.w = 256 * uint8_to_int8(register_rx_buffer[19]) + register_rx_buffer[18];
+    evt.data.full_read_done.qua.x = 256 * uint8_to_int8(register_rx_buffer[21]) + register_rx_buffer[20];
+    evt.data.full_read_done.qua.y = 256 * uint8_to_int8(register_rx_buffer[23]) + register_rx_buffer[22];
+    evt.data.full_read_done.qua.z = 256 * uint8_to_int8(register_rx_buffer[25]) + register_rx_buffer[24];
+    bno055_evt_callback(&evt);
+}
+
 /* @brief Callback for when quat_read operation has completed. */
 static void simple_quat_read_complete(const register_operation_t * p_op)
 {
@@ -694,10 +720,32 @@ static void simple_quat_read_complete(const register_operation_t * p_op)
     bno055_evt_callback(&evt);
 }
 
+uint32_t bno055_full_read(void)
+{
+    uint32_t ret_code;
+    if (remote_state_is_ready() && (current_operating_mode == BNO055_OPERATING_MODE_NDOF
+        || current_operating_mode == BNO055_OPERATING_MODE_NDOF_FMC_OFF))
+    {
+        ret_code = register_read(BNO055_REG_ADDR_ACC_DATA_X_LSB, FULL_READ_SIZE);
+    }
+    else
+    {
+        ret_code = NRF_ERROR_INVALID_STATE;
+    }
+
+    if (NRF_SUCCESS == ret_code)
+    {
+        simple_operation_complete_callback = simple_full_read_complete;
+        simple_operation_state = SIMPLE_OPERATION_STATE_ONGOING;
+    }
+
+    return ret_code;
+}
+
 uint32_t bno055_read_quat(void)
 {
     uint32_t ret_code;
-    if (remote_state_is_ready() && is_fusion_mode(target_operating_mode))
+    if (remote_state_is_ready() && is_fusion_mode(current_operating_mode))
     {
         ret_code = register_read(BNO055_REG_ADDR_QUA_DATA_W_LSB, 8);
     }
