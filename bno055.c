@@ -697,10 +697,13 @@ static void simple_full_read_complete(const register_operation_t * p_op)
     evt.data.full_read_done.gyr.x = 256 * uint8_to_int8(register_rx_buffer[13]) + register_rx_buffer[12];
     evt.data.full_read_done.gyr.y = 256 * uint8_to_int8(register_rx_buffer[15]) + register_rx_buffer[14];
     evt.data.full_read_done.gyr.z = 256 * uint8_to_int8(register_rx_buffer[17]) + register_rx_buffer[16];
-    evt.data.full_read_done.qua.w = 256 * uint8_to_int8(register_rx_buffer[19]) + register_rx_buffer[18];
-    evt.data.full_read_done.qua.x = 256 * uint8_to_int8(register_rx_buffer[21]) + register_rx_buffer[20];
-    evt.data.full_read_done.qua.y = 256 * uint8_to_int8(register_rx_buffer[23]) + register_rx_buffer[22];
-    evt.data.full_read_done.qua.z = 256 * uint8_to_int8(register_rx_buffer[25]) + register_rx_buffer[24];
+    evt.data.full_read_done.eul.x = 256 * uint8_to_int8(register_rx_buffer[19]) + register_rx_buffer[18];
+    evt.data.full_read_done.eul.y = 256 * uint8_to_int8(register_rx_buffer[21]) + register_rx_buffer[20];
+    evt.data.full_read_done.eul.z = 256 * uint8_to_int8(register_rx_buffer[23]) + register_rx_buffer[22];
+    evt.data.full_read_done.qua.w = 256 * uint8_to_int8(register_rx_buffer[25]) + register_rx_buffer[24];
+    evt.data.full_read_done.qua.x = 256 * uint8_to_int8(register_rx_buffer[27]) + register_rx_buffer[26];
+    evt.data.full_read_done.qua.y = 256 * uint8_to_int8(register_rx_buffer[29]) + register_rx_buffer[28];
+    evt.data.full_read_done.qua.z = 256 * uint8_to_int8(register_rx_buffer[31]) + register_rx_buffer[30];
     bno055_evt_callback(&evt);
 }
 
