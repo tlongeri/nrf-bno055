@@ -720,7 +720,7 @@ static void simple_quat_read_complete(const register_operation_t * p_op)
     bno055_evt_callback(&evt);
 }
 
-uint32_t bno055_full_read(void)
+uint32_t bno055_read_full(void)
 {
     uint32_t ret_code;
     if (remote_state_is_ready() && (current_operating_mode == BNO055_OPERATING_MODE_NDOF

@@ -261,6 +261,8 @@ bool bno055_is_ready(void);
  */
 uint32_t bno055_read_register(bno055_reg_addr_t addr, uint8_t length);
 
+uint32_t bno055_read_full(void);
+
 /**
  * @brief Read quaternion orientation data.
  * 
