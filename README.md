@@ -71,8 +71,13 @@ int main(void)
     uint32_t err_code = bno055_wakeup();
     APP_ERROR_CHECK(err_code);
 
-    bno055_set_operating_and_power_modes(BNO055_OPERATING_MODE_CONFIGMODE, BNO055_POWER_MODE_NORMAL);
+    bno055_set_operating_and_power_modes(BNO055_OPERATING_MODE_NDOF, BNO055_POWER_MODE_NORMAL);
     
     /* Wait for the ready event */
+    while (true)
+    {
+        nrf_evt_queue_execute();
+        sd_app_evt_wait();
+    }
 }
 ```
