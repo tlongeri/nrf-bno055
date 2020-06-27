@@ -190,6 +190,7 @@ typedef struct {
     bno055_vector_t gyr;
     bno055_vector_t eul;
     bno055_quat_t   qua;
+    bno055_vector_t grv;
 } bno055_full_read_t;
 
 typedef struct {

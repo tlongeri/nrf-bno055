@@ -19,7 +19,8 @@
  * Taken from table 4-8 of the datasheet */
 #define BNO055_LONG_WRITE_IDLE_TIME_US 500
 
-#define FULL_READ_SIZE (BNO055_REG_ADDR_QUA_DATA_Z_MSB - BNO055_REG_ADDR_ACC_DATA_X_LSB + 1)
+#define FULL_READ_START BNO055_REG_ADDR_ACC_DATA_X_LSB
+#define FULL_READ_SIZE (BNO055_REG_ADDR_GRV_DATA_Z_MSB - FULL_READ_START + 1)
 
 typedef enum {
     BNO055_PAGE_0 = 0x00,
@@ -161,7 +162,8 @@ static nrf_evt_queue_evt_t register_timeout_evt;
  * TODO: I am not sure whether the nrf_drv_twi requires them to be statically allocated or not, so
  *       I'm leaving it statically allocated for now. */
 #define REGISTER_TX_BUFFER_SIZE 2 
-#define REGISTER_RX_BUFFER_SIZE 32
+#define REGISTER_RX_BUFFER_SIZE 64
+STATIC_ASSERT(REGISTER_RX_BUFFER_SIZE >= FULL_READ_SIZE);
 static uint8_t register_tx_buffer[REGISTER_TX_BUFFER_SIZE];
 static uint8_t register_rx_buffer[REGISTER_RX_BUFFER_SIZE];
 
@@ -704,6 +706,13 @@ static void simple_full_read_complete(const register_operation_t * p_op)
     evt.data.full_read_done.qua.x = 256 * uint8_to_int8(register_rx_buffer[27]) + register_rx_buffer[26];
     evt.data.full_read_done.qua.y = 256 * uint8_to_int8(register_rx_buffer[29]) + register_rx_buffer[28];
     evt.data.full_read_done.qua.z = 256 * uint8_to_int8(register_rx_buffer[31]) + register_rx_buffer[30];
+    evt.data.full_read_done.grv.x = 256 * uint8_to_int8(register_rx_buffer[BNO055_REG_ADDR_GRV_DATA_X_MSB - FULL_READ_START])
+        + register_rx_buffer[BNO055_REG_ADDR_GRV_DATA_X_LSB - FULL_READ_START];
+    evt.data.full_read_done.grv.y = 256 * uint8_to_int8(register_rx_buffer[BNO055_REG_ADDR_GRV_DATA_Y_MSB - FULL_READ_START])
+        + register_rx_buffer[BNO055_REG_ADDR_GRV_DATA_Y_LSB - FULL_READ_START];
+    evt.data.full_read_done.grv.z = 256 * uint8_to_int8(register_rx_buffer[BNO055_REG_ADDR_GRV_DATA_Z_MSB - FULL_READ_START])
+        + register_rx_buffer[BNO055_REG_ADDR_GRV_DATA_Z_LSB - FULL_READ_START];
+    
     bno055_evt_callback(&evt);
 }
 
@@ -729,7 +738,7 @@ uint32_t bno055_read_full(void)
     if (remote_state_is_ready() && (current_operating_mode == BNO055_OPERATING_MODE_NDOF
         || current_operating_mode == BNO055_OPERATING_MODE_NDOF_FMC_OFF))
     {
-        ret_code = register_read(BNO055_REG_ADDR_ACC_DATA_X_LSB, FULL_READ_SIZE);
+        ret_code = register_read(FULL_READ_START, FULL_READ_SIZE);
     }
     else
     {
